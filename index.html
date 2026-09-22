@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Thi Đua Lớp 10A7</title>
+    <!-- Thư viện xuất Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #1f4e78;
+            --secondary-color: #007bff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --bg-color: #f4f6f9;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 15px; 
+            background-color: var(--bg-color); 
+            color: #333; 
+        }
+
+        .container { 
+            max-width: 1150px; 
+            margin: auto; 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+        }
+
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 2px solid var(--primary-color); 
+            padding-bottom: 12px; 
+            margin-bottom: 20px; 
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h2 { color: var(--primary-color); margin: 0; }
+
+        .btn { 
+            padding: 8px 14px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.2s; 
+            font-size: 0.88em; 
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-admin { background-color: var(--success-color); color: white; }
+        .btn-edit-name { background-color: #17a2b8; color: white; }
+        .btn-logout { background-color: var(--danger-color); color: white; }
+        .btn-delete { background-color: var(--danger-color); color: white; padding: 4px 8px; font-size: 0.8em; }
+        .btn-excel { background-color: var(--primary-color); color: white; margin-top: 15px; font-size: 1rem; padding: 10px 20px; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+
+        .card { 
+            background: #f9fbfd; 
+            border: 1px solid #d9d9d9; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+        }
+
+        .hidden { display: none !important; }
+        
+        .form-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); 
+            gap: 12px; 
+            margin-bottom: 12px; 
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; }
+        input, select { padding: 9px; border: 1px solid #ccc; border-radius: 5px; font-size: 0.95rem; }
+
+        .quick-preset-container { margin-top: 8px; margin-bottom: 12px; background: #fff3cd; border: 1px solid #ffeeba; padding: 10px; border-radius: 6px; }
+        .quick-preset-container-danger { margin-top: 8px; margin-bottom: 12px; background: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 6px; }
+        .quick-preset-container-bonus { margin-top: 8px; margin-bottom: 12px; background: #d4edda; border: 1px solid #c3e6cb; padding: 10px; border-radius: 6px; }
+        
+        .preset-select { width: 100%; padding: 8px; border: 1px solid #d6a938; border-radius: 5px; background-color: #fff; color: #856404; font-weight: 500; }
+        .preset-select-danger { width: 100%; padding: 8px; border: 1px solid #f5c6cb; border-radius: 5px; background-color: #fff; color: #721c24; font-weight: 500; }
+        .preset-select-bonus { width: 100%; padding: 8px; border: 1px solid #c3e6cb; border-radius: 5px; background-color: #fff; color: #155724; font-weight: 500; }
+
+        .table-responsive { overflow-x: auto; max-height: 500px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9em; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: var(--primary-color); color: white; white-space: nowrap; position: sticky; top: 0; z-index: 10; }
+        tr:nth-child(even) { background-color: #f9fbfd; }
+        
+        .score-good { color: var(--success-color); font-weight: bold; }
+        .score-bad { color: var(--danger-color); font-weight: bold; }
+        .rank-badge { display: inline-block; background-color: var(--warning-color); color: #000; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 1em; }
+
+        .month-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .month-box { border: 1px solid #ddd; padding: 10px; border-radius: 6px; text-align: center; background: #fff; }
+        
+        .auth-container { max-width: 420px; margin: 30px auto; text-align: center; padding: 25px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; }
+
+        @media (max-width: 600px) {
+            .container { padding: 12px; }
+            .header { text-align: center; justify-content: center; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>Thi Đua Lớp 10A7</h2>
+        <div>
+            <span id="role-badge" style="margin-right: 10px; font-weight: bold; color: #666;">Chưa đăng nhập</span>
+            <button id="btn-logout" class="btn btn-logout hidden" onclick="dangXuat()">🔒 Đăng Xuất</button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH XÁC THỰC -->
+    <div id="section-welcome">
+        <div class="auth-container">
+            <h3 style="font-size: 20px; color: #1f4e78; margin-bottom: 8px;">Cổng Thông Tin Thi Đua Lớp 10A7</h3>
+            <p style="font-size: 14px; color: #666; margin-bottom: 20px;">Nhập mã truy cập (Học sinh hoặc Quản lý)</p>
+
+            <div>
+                <input type="text" id="input-access-code" placeholder="VD: 10A7-Hs01 đến 10A7-Hs51" style="width: 100%; padding: 12px; font-size: 15px; text-align: center; box-sizing: border-box;" onkeypress="checkEnterKey(event)" />
+                <button type="button" onclick="xuLyDangNhap()" style="width: 100%; margin-top: 12px; padding: 12px; background-color: #1f4e78; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">🔑 Kiểm Tra Kết Quả</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KHU VỰC HỌC SINH -->
+    <div id="section-student-private" class="card hidden">
+        <div style="border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 id="student-private-title" style="color: #007bff; margin: 0;"></h3>
+            <div id="student-private-rank" style="margin-top: 10px;"></div>
+        </div>
+
+        <h4>📊 Điểm Thi Đua & Xếp Loại Từng Tháng</h4>
+        <div class="month-grid" id="student-private-month-grid"></div>
+
+        <h4>📋 Lịch Sử Ghi Nhận Vi Phạm / Khen Thưởng</h4>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Thời Gian</th>
+                        <th>Điểm</th>
+                        <th>Mã Lỗi / Nội Dung</th>
+                    </tr>
+                </thead>
+                <tbody id="student-private-history"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- KHU VỰC QUẢN LÝ (ADMIN) -->
+    <div id="admin-form-section" class="card hidden">
+        <h3>Bảng Điều Khiển Quản Lý (Giáo Viên / Cán Bộ Lớp)</h3>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Chọn Học Sinh:</label>
+                <select id="select-student" onchange="capNhatLichSuAdmin()"></select>
+            </div>
+            <div class="form-group">
+                <label>Tháng:</label>
+                <select id="select-month">
+                    <option value="9">Tháng 9</option>
+                    <option value="10">Tháng 10</option>
+                    <option value="11">Tháng 11</option>
+                    <option value="12">Tháng 12</option>
+                    <option value="1">Tháng 1</option>
+                    <option value="2">Tháng 2</option>
+                    <option value="3">Tháng 3</option>
+                    <option value="4">Tháng 4</option>
+                    <option value="5">Tháng 5</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ngày (1-31):</label>
+                <input type="number" id="input-day" min="1" max="31" value="1">
+            </div>
+            <div class="form-group">
+                <label>Điểm (+ hoặc -):</label>
+                <input type="number" id="input-score" placeholder="VD: 2, 5 hoặc -1, -2..." oninput="kiemTraInputDiem()">
+            </div>
+        </div>
+
+        <!-- DANH MỤC LỖI & PHÂN THƯỞNG -->
+        <div id="quick-bonus-container-2" class="quick-preset-container-bonus hidden">
+            <label style="font-size: 0.82rem; font-weight: bold; color: #155724;">🌟 Mã Khen thưởng CỘNG 2 điểm (+2):</label>
+            <select class="preset-select-bonus" id="select-preset-bonus-2" onchange="chonLoiViPham('select-preset-bonus-2')">
+                <option value="">-- Chọn mã khen thưởng --</option>
+                <option value="+2.1">+2.1 (Người tốt việc tốt)</option>
+                <option value="+2.2">+2.2 (Tham gia hoạt động phong trào)</option>
+            </select>
+        </div>
+
+        <div id="quick-bonus-container-5" class="quick-preset-container-bonus hidden">
+            <label style="font-size: 0.82rem; font-weight: bold; color: #155724;">🌟 Mã Khen thưởng CỘNG 5 điểm (+5):</label>
+            <select class="preset-select-bonus" id="select-preset-bonus-5" onchange="chonLoiViPham('select-preset-bonus-5')">
+                <option value="">-- Chọn mã khen thưởng --</option>
+                <option value="+5.1">+5.1 (Nộp BTVN, BT cuối tuần đầy đủ đúng hạn)</option>
+                <option value="+5.2">+5.2 (Tham gia làm bài kiểm tra buổi tối đầy đủ)</option>
+            </select>
+        </div>
+
+        <div id="quick-error-container-1" class="quick-preset-container hidden">
+            <label style="font-size: 0.82rem; font-weight: bold; color: #856404;">⚠️ Mã Lỗi trừ 1 điểm (-1):</label>
+            <select class="preset-select" id="select-preset-error-1" onchange="chonLoiViPham('select-preset-error-1')">
+                <option value="">-- Chọn mã lỗi --</option>
+                <option value="1.1">1.1 (Nghỉ học có xin phép)</option>
+                <option value="1.2">1.2 (Đi học trễ / vào lớp trễ)</option>
+                <option value="1.3">1.3 (Vi phạm PH-dép-KQ-ĐP)</option>
+                <option value="1.4">1.4 (Son môi / mang son)</option>
+                <option value="1.5">1.5 (Thiếu sách vở / tài liệu / đồ dùng)</option>
+                <option value="1.6">1.6 (Nộp BTVN / BT cuối tuần trễ)</option>
+                <option value="1.7">1.7 (Trực nhật / vệ sinh dơ)</option>
+            </select>
+        </div>
+
+        <div id="quick-error-container-2" class="quick-preset-container hidden">
+            <label style="font-size: 0.82rem; font-weight: bold; color: #856404;">⚠️ Mã Lỗi trừ 2 điểm (-2):</label>
+            <select class="preset-select" id="select-preset-error-2" onchange="chonLoiViPham('select-preset-error-2')">
+                <option value="">-- Chọn mã lỗi --</option>
+                <option value="2.1">2.1 (Không trực nhật / vệ sinh / xả rác ra lớp)</option>
+                <option value="2.2">2.2 (Không tắt điện / quạt khi ra khỏi phòng)</option>
+                <option value="2.3">2.3 (Vi phạm quy định tóc / sơn móng tay)</option>
+                <option value="2.4">2.4 (Làm việc riêng trong giờ)</option>
+                <option value="2.5">2.5 (Bị đuổi ra khỏi lớp)</option>
+                <option value="2.6">2.6 (Mang quà bánh / ăn quà trong lớp)</option>
+            </select>
+        </div>
+
+        <div id="quick-error-container-3" class="quick-preset-container hidden">
+            <label style="font-size: 0.82rem; font-weight: bold; color: #856404;">⚠️ Mã Lỗi trừ 3 điểm (-3):</label>
+            <select class="preset-select" id="select-preset-error-3" onchange="chonLoiViPham('select-preset-error-3')">
+                <option value="">-- Chọn mã lỗi --</option>
+                <option value="3.1">3.1 (Nghỉ học không xin phép)</option>
+                <option value="3.2">3.2 (Không làm bài trên classroom)</option>
+                <option value="3.3">3.3 (Không nộp BTVN / BT cuối tuần)</option>
+            </select>
+        </div>
+
+        <div id="quick-error-container-5" class="quick-preset-container hidden">
+            <label style="font-size: 0.82rem; font-weight: bold; color: #856404;">⚠️ Mã Lỗi trừ 5 điểm (-5):</label>
+            <select class="preset-select" id="select-preset-error-5" onchange="chonLoiViPham('select-preset-error-5')">
+                <option value="">-- Chọn mã lỗi --</option>
+                <option value="5.1">5.1 (Sử dụng ĐT trong giờ)</option>
+                <option value="5.2">5.2 (Nô đùa thái quá / gây mâu thuẫn)</option>
+            </select>
+        </div>
+
+        <div id="quick-error-container-10" class="quick-preset-container-danger hidden">
+            <label style="font-size: 0.82rem; font-weight: bold; color: #721c24;">🚨 Mã Lỗi trừ 10 điểm (-10):</label>
+            <select class="preset-select-danger" id="select-preset-error-10" onchange="chonLoiViPham('select-preset-error-10')">
+                <option value="">-- Chọn mã lỗi --</option>
+                <option value="10.1">10.1 (Cúp tiết / trốn học)</option>
+                <option value="10.2">10.2 (Vi phạm quy chế thi cử)</option>
+                <option value="10.3">10.3 (Hút thuốc lá)</option>
+                <option value="10.4">10.4 (Đánh nhau)</option>
+            </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>Mã Lỗi / Mã Khen Thưởng:</label>
+            <input type="text" id="input-reason" placeholder="Ví dụ: 1.2, 2.4, +2.1...">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button class="btn btn-admin" onclick="themDiem()">➕ Lưu Thi Đua</button>
+            <button class="btn btn-edit-name" onclick="doiTenHocSinhTuAdmin()">✏️ Đổi Tên Học Sinh Đã Chọn</button>
+            <button class="btn btn-secondary" onclick="saoLuuDuLieu()">💾 Sao Lưu JSON</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('input-json-file').click()">📂 Phục Hồi JSON</button>
+            <input type="file" id="input-json-file" accept=".json" style="display: none;" onchange="phucHoiDuLieu(event)">
+        </div>
+
+        <!-- BẢNG LỊCH SỬ CHO HỌC SINH ĐÃ CHỌN -->
+        <hr style="border: 0; border-top: 1px solid #ccc; margin: 20px 0;">
+        <h4 style="color: #dc3545; margin-bottom: 10px;">🛠️ Quản Lý Lịch Sử Ghi Nhận Cho Học Sinh Đang Chọn</h4>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Thời Gian</th>
+                        <th>Điểm</th>
+                        <th>Mã Lỗi / Nội Dung</th>
+                        <th>Hành Động</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-history-manage-body">
+                    <tr><td colspan="5">Chưa chọn học sinh hoặc không có lịch sử.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- BẢNG ĐIỂM TỔNG HỢP -->
+    <div id="section-full-table" class="hidden">
+        <h3>Bảng Điểm Thi Đua Tổng Hợp Toàn Lớp 10A7</h3>
+        <div class="table-responsive">
+            <table id="table-scores">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">STT</th>
+                        <th>Họ và Tên Học Sinh</th>
+                        <th>T9</th><th>T10</th><th>T11</th><th>T12</th><th>T1</th><th>T2</th><th>T3</th><th>T4</th><th>T5</th>
+                        <th>Tổng Cả Năm</th>
+                        <th>Xếp Hạng</th>
+                    </tr>
+                </thead>
+                <tbody id="student-table-body"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-excel" onclick="xuatExcel()">📊 Xuất File Excel Lớp 10A7</button>
+    </div>
+</div>
+
+<script>
+    const RAW_ADMIN = "A7@Admin2026!";
+    const MONTHS = [9, 10, 11, 12, 1, 2, 3, 4, 5];
+    const DEFAULT_MONTHLY_SCORE = 40;
+    const TOTAL_DEFAULT_SCORE = DEFAULT_MONTHLY_SCORE * MONTHS.length;
+    const TOTAL_STUDENTS = 51;
+    let currentRole = "NONE";
+    let loggedInStudentStt = null;
+
+    // Bảng tra cứu mô tả đầy đủ từ Mã Số
+    const CODE_DESCRIPTIONS = {
+        "+2.1": "Người tốt việc tốt",
+        "+2.2": "Tham gia hoạt động phong trào",
+        "+5.1": "Nộp BTVN, BT cuối tuần đầy đủ đúng thời gian",
+        "+5.2": "Tham gia làm bài kiểm tra buổi tối đầy đủ",
+        "1.1": "Nghỉ học có xin phép",
+        "1.2": "Đi học trễ / vào lớp trễ",
+        "1.3": "Vi phạm PH-dép-KQ-ĐP",
+        "1.4": "Son môi / mang son",
+        "1.5": "Thiếu sách vở / tài liệu / đồ dùng học tập",
+        "1.6": "Nộp BTVN / BT cuối tuần trễ",
+        "1.7": "Trực nhật / vệ sinh dơ",
+        "2.1": "Không trực nhật / vệ sinh / xả rác ra lớp",
+        "2.2": "Không tắt điện / quạt khi ra khỏi phòng",
+        "2.3": "Vi phạm quy định về tóc / sơn móng tay hoặc chân",
+        "2.4": "Làm việc riêng trong giờ",
+        "2.5": "Bị đuổi ra khỏi lớp",
+        "2.6": "Mang quà bánh / ăn quà trong lớp",
+        "3.1": "Nghỉ học không xin phép",
+        "3.2": "Không làm bài trên classroom",
+        "3.3": "Không nộp BTVN / BT cuối tuần",
+        "5.1": "Sử dụng ĐT trong giờ",
+        "5.2": "Nô đùa thái quá / gây mâu thuẫn",
+        "10.1": "Cúp tiết / trốn học",
+        "10.2": "Vi phạm quy chế thi cử",
+        "10.3": "Hút thuốc lá",
+        "10.4": "Đánh nhau"
+    };
+
+    function getFullDescription(code) {
+        if (!code) return "Ghi nhận thi đua";
+        let cleanCode = code.trim();
+        if (CODE_DESCRIPTIONS[cleanCode]) {
+            return `${cleanCode} (${CODE_DESCRIPTIONS[cleanCode]})`;
+        }
+        return cleanCode;
+    }
+
+    const defaultStudentNames = [
+        "Đào Thị Hoài An", "Nguyễn Hải An", "Bùi Trần Thảo Anh", "Đinh Tuấn Anh", "Lê Phạm Thuỳ Anh",
+        "Trịnh Vân Anh", "Cao Ngọc Trúc Diễm", "Nguyễn Thúy Duy", "Nguyễn Minh Đức", "Nguyễn Văn Giáp",
+        "Hoàng Bá Hạo", "Trần Quang Hiếu", "Nguyễn Thị Thu Hoài", "Võ Tuấn Kha", "Trần Thị Mỹ Linh",
+        "Trương Thị Thùy Linh", "Phạm Phi Long", "Trần Thị Bích Nga", "Nguyễn Thanh Ngân", "Vũ Hoàng Bảo Ngân",
+        "Lê Dĩnh Nghi", "Nguyễn Khánh Ngọc", "Nguyễn Ngô Khánh Ngọc", "Phùng Nguyễn Khánh Ngọc", "Phạm Hoàng Gia Nguyên",
+        "Bùi Thị Mỹ Nhật", "Nguyễn Đoàn Uyên Nhi", "Nguyễn Thái Ngọc Nhi", "Lê Võ Bảo Như", "Nguyễn Thanh Phong",
+        "Trần Thị Mai Phương", "Võ Trúc Lan Phương", "Phan Anh Quân", "Nguyễn Đan Quỳnh", "Tô Như Quỳnh",
+        "Ngô Quốc Thái", "Nguyễn Bùi Phương Thảo", "Nguyễn Thị Anh Thư", "Vũ Ngọc Kỳ Thư", "Nguyễn Nhật Khánh Thy",
+        "Phạm Ngọc Bảo Thy", "Hoàng Thị Thùy Trang", "Trần Nguyễn Thùy Trang", "Trương Ngọc Trầm", "Trần Thị Huyền Trân",
+        "Võ Thị Thanh Trúc", "Nguyễn Thị Minh Tuyết", "Cao Nguyễn Khánh Vy", "Ngô Ngọc Tường Vy", "Phạm Thúy Vy",
+        "Nguyễn Hoàng Tân Xuân"
+    ];
+
+    const initialStudents = [];
+    for (let i = 1; i <= TOTAL_STUDENTS; i++) {
+        let name = defaultStudentNames[i - 1] || `Học Sinh ${i < 10 ? '0' + i : i}`;
+        initialStudents.push({ stt: i, name: name, history: [] });
+    }
+
+    let savedData = JSON.parse(localStorage.getItem('hocSinhData_10A7_v55'));
+    let students = savedData || initialStudents;
+
+    if (savedData) {
+        students.forEach((s, idx) => {
+            if (defaultStudentNames[idx] && (s.name.startsWith("Học Sinh ") || !s.name)) {
+                s.name = defaultStudentNames[idx];
+            }
+        });
+    }
+
+    if (students.length < TOTAL_STUDENTS) {
+        for (let i = students.length + 1; i <= TOTAL_STUDENTS; i++) {
+            let name = defaultStudentNames[i - 1] || `Học Sinh ${i < 10 ? '0' + i : i}`;
+            students.push({ stt: i, name: name, history: [] });
+        }
+    }
+    
+    saveData();
+
+    function saveData() {
+        localStorage.setItem('hocSinhData_10A7_v55', JSON.stringify(students));
+        if (currentRole === "ADMIN") {
+            renderTable();
+            capNhatLichSuAdmin();
+        }
+        if (currentRole === "STUDENT") renderStudentPrivateView(loggedInStudentStt);
+    }
+
+    function checkEnterKey(event) {
+        if (event.key === 'Enter') xuLyDangNhap();
+    }
+
+    function resetAllPresets() {
+        const presetSelects = [
+            "select-preset-bonus-2", "select-preset-bonus-5",
+            "select-preset-error-1", "select-preset-error-2", 
+            "select-preset-error-3", "select-preset-error-5", "select-preset-error-10"
+        ];
+        presetSelects.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = "";
+        });
+    }
+
+    function kiemTraInputDiem() {
+        const val = document.getElementById("input-score").value.trim();
+        const containers = ["quick-bonus-container-2", "quick-bonus-container-5", "quick-error-container-1", "quick-error-container-2", "quick-error-container-3", "quick-error-container-5", "quick-error-container-10"];
+        containers.forEach(id => document.getElementById(id).classList.add("hidden"));
+
+        if (val === "2" || val === "+2") document.getElementById("quick-bonus-container-2").classList.remove("hidden");
+        else if (val === "5" || val === "+5") document.getElementById("quick-bonus-container-5").classList.remove("hidden");
+        else if (val === "-1") document.getElementById("quick-error-container-1").classList.remove("hidden");
+        else if (val === "-2") document.getElementById("quick-error-container-2").classList.remove("hidden");
+        else if (val === "-3") document.getElementById("quick-error-container-3").classList.remove("hidden");
+        else if (val === "-5") document.getElementById("quick-error-container-5").classList.remove("hidden");
+        else if (val === "-10") document.getElementById("quick-error-container-10").classList.remove("hidden");
+    }
+
+    function chonLoiViPham(selectId) {
+        const selectPreset = document.getElementById(selectId);
+        if (selectPreset.value !== "") {
+            document.getElementById("input-reason").value = selectPreset.value;
+        }
+    }
+
+    function xuLyDangNhap() {
+        let inputEl = document.getElementById("input-access-code");
+        let code = inputEl.value ? inputEl.value.trim() : "";
+        
+        if (!code) { alert("Vui lòng nhập mã truy cập!"); return; }
+
+        if (code === RAW_ADMIN) {
+            alert("Đã đăng nhập: Quyền Quản Lý!");
+            currentRole = "ADMIN";
+            loggedInStudentStt = null;
+            inputEl.value = "";
+            capNhatGiaoDien();
+            return;
+        }
+
+        const hsRegex = /^10A7-Hs(0[1-9]|[1-4][0-9]|5[0-1])$/i;
+        const match = code.match(hsRegex);
+
+        if (match) {
+            let stt = parseInt(match[1], 10);
+            let student = students.find(s => s.stt === stt);
+            if (student) {
+                currentRole = "STUDENT";
+                loggedInStudentStt = stt;
+                inputEl.value = "";
+                capNhatGiaoDien();
+                alert(`Đã đăng nhập: STT ${student.stt} - ${student.name}!`);
+            }
+        } else {
+            alert("Mã xác thực không hợp lệ!");
+        }
+    }
+
+    function dangXuat() {
+        currentRole = "NONE";
+        loggedInStudentStt = null;
+        capNhatGiaoDien();
+    }
+
+    function capNhatGiaoDien() {
+        const secWelcome = document.getElementById("section-welcome");
+        const secStudentPrivate = document.getElementById("section-student-private");
+        const secAdminForm = document.getElementById("admin-form-section");
+        const secFullTable = document.getElementById("section-full-table");
+        const btnLogout = document.getElementById("btn-logout");
+        const roleBadge = document.getElementById("role-badge");
+
+        if (currentRole === "ADMIN") {
+            secWelcome.classList.add("hidden");
+            secStudentPrivate.classList.add("hidden");
+            secAdminForm.classList.remove("hidden");
+            secFullTable.classList.remove("hidden");
+            btnLogout.classList.remove("hidden");
+            roleBadge.innerText = "Quyền: Quản Lý";
+            roleBadge.style.color = "#28a745";
+            initAdminSelect();
+            renderTable();
+            capNhatLichSuAdmin();
+        } else if (currentRole === "STUDENT") {
+            secWelcome.classList.add("hidden");
+            secAdminForm.classList.add("hidden");
+            secFullTable.classList.add("hidden");
+            secStudentPrivate.classList.remove("hidden");
+            btnLogout.classList.remove("hidden");
+
+            let student = students.find(s => s.stt === loggedInStudentStt);
+            roleBadge.innerText = `Học sinh: STT ${student?.stt} - ${student?.name || ''}`;
+            roleBadge.style.color = "#007bff";
+            renderStudentPrivateView(loggedInStudentStt);
+        } else {
+            secWelcome.classList.remove("hidden");
+            secStudentPrivate.classList.add("hidden");
+            secAdminForm.classList.add("hidden");
+            secFullTable.classList.add("hidden");
+            btnLogout.classList.add("hidden");
+            roleBadge.innerText = "Chưa đăng nhập";
+            roleBadge.style.color = "#666";
+        }
+    }
+
+    function initAdminSelect() {
+        const select = document.getElementById("select-student");
+        let currentVal = select.value;
+        select.innerHTML = "";
+        students.forEach(s => {
+            let opt = document.createElement("option");
+            opt.value = s.stt;
+            opt.innerText = `STT ${s.stt}: ${s.name}`;         
+            select.appendChild(opt);
+        });
+        if (currentVal) select.value = currentVal;
+    }
+
+    function tinhDiemHocSinh(student) {
+        let monthScores = {};
+        MONTHS.forEach(m => monthScores[m] = DEFAULT_MONTHLY_SCORE);
+        
+        student.history.forEach(item => {
+            if (monthScores[item.month] !== undefined) {
+                monthScores[item.month] += item.score;
+            }
+        });
+
+        let total = 0;
+        MONTHS.forEach(m => total += monthScores[m]);
+
+        return { monthScores, total };
+    }
+
+    function getRankings() {
+        let stats = students.map(s => {
+            let { total } = tinhDiemHocSinh(s);
+            return { stt: s.stt, total };
+        });
+
+        stats.sort((a, b) => b.total - a.total);
+
+        let ranks = {};
+        stats.forEach((item, index) => {
+            ranks[item.stt] = index + 1;
+        });
+        return ranks;
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById("student-table-body");
+        tbody.innerHTML = "";
+        let ranks = getRankings();
+
+        students.forEach(s => {
+            let { monthScores, total } = tinhDiemHocSinh(s);
+            let tr = document.createElement("tr");
+
+            let tdStt = `<td>${s.stt}</td>`;
+            let tdName = `<td style="text-align: left; font-weight: 500;">${s.name}</td>`;
+            
+            let tdMonths = MONTHS.map(m => {
+                let sc = monthScores[m];
+                let cls = sc >= DEFAULT_MONTHLY_SCORE ? 'score-good' : 'score-bad';
+                return `<td class="${cls}">${sc}</td>`;
+            }).join('');
+
+            let totalCls = total >= TOTAL_DEFAULT_SCORE ? 'score-good' : 'score-bad';
+            let tdTotal = `<td class="${totalCls}">${total}</td>`;
+            let tdRank = `<td><span class="rank-badge">#${ranks[s.stt]}</span></td>`;
+
+            tr.innerHTML = tdStt + tdName + tdMonths + tdTotal + tdRank;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function renderStudentPrivateView(stt) {
+        let student = students.find(s => s.stt === stt);
+        if (!student) return;
+
+        document.getElementById("student-private-title").innerText = `Họ và Tên: ${student.name} (STT ${student.stt})`;
+        
+        let ranks = getRankings();
+        let { monthScores, total } = tinhDiemHocSinh(student);
+
+        document.getElementById("student-private-rank").innerHTML = `
+            <span class="rank-badge">🏆 Xếp Hạng Lớp: #${ranks[student.stt]} / ${TOTAL_STUDENTS}</span>
+            <span style="margin-left: 15px; font-weight: bold; font-size: 1.1em;">Tổng Điểm Cả Năm: <span class="${total >= TOTAL_DEFAULT_SCORE ? 'score-good' : 'score-bad'}">${total}</span> / ${TOTAL_DEFAULT_SCORE}</span>
+        `;
+
+        const monthGrid = document.getElementById("student-private-month-grid");
+        monthGrid.innerHTML = "";
+        MONTHS.forEach(m => {
+            let sc = monthScores[m];
+            let box = document.createElement("div");
+            box.className = "month-box";
+            box.innerHTML = `
+                <div style="font-size: 0.85em; color: #666;">Tháng ${m}</div>
+                <div style="font-size: 1.3em;" class="${sc >= DEFAULT_MONTHLY_SCORE ? 'score-good' : 'score-bad'}">${sc}</div>
+            `;
+            monthGrid.appendChild(box);
+        });
+
+        const historyTbody = document.getElementById("student-private-history");
+        historyTbody.innerHTML = "";
+
+        if (student.history.length === 0) {
+            historyTbody.innerHTML = `<tr><td colspan="3">Chưa có lịch sử vi phạm hoặc khen thưởng nào.</td></tr>`;
+            return;
+        }
+
+        let sortedHistory = [...student.history].reverse();
+        sortedHistory.forEach(item => {
+            let tr = document.createElement("tr");
+            let scoreDisplay = item.score > 0 ? `<span class="score-good">+${item.score}</span>` : `<span class="score-bad">${item.score}</span>`;
+            tr.innerHTML = `
+                <td>Ngày ${item.day}/${item.month}</td>
+                <td>${scoreDisplay}</td>
+                <td style="text-align: left;">${getFullDescription(item.reason)}</td>
+            `;
+            historyTbody.appendChild(tr);
+        });
+    }
+
+    function themDiem() {
+        let stt = parseInt(document.getElementById("select-student").value, 10);
+        let month = parseInt(document.getElementById("select-month").value, 10);
+        let day = parseInt(document.getElementById("input-day").value, 10);
+        let score = parseInt(document.getElementById("input-score").value, 10);
+        let reason = document.getElementById("input-reason").value.trim();
+
+        if (isNaN(score)) { alert("Vui lòng nhập điểm hợp lệ!"); return; }
+        if (!reason) { alert("Vui lòng nhập mã hoặc lý do!"); return; }
+
+        let student = students.find(s => s.stt === stt);
+        if (student) {
+            student.history.push({ month, day, score, reason });
+            saveData();
+            document.getElementById("input-score").value = "";
+            document.getElementById("input-reason").value = "";
+            resetAllPresets();
+            kiemTraInputDiem();
+            alert("Đã lưu ghi nhận thành công!");
+        }
+    }
+
+    function capNhatLichSuAdmin() {
+        let selectEl = document.getElementById("select-student");
+        if (!selectEl.value) return;
+
+        let stt = parseInt(selectEl.value, 10);
+        let student = students.find(s => s.stt === stt);
+        const tbody = document.getElementById("admin-history-manage-body");
+        tbody.innerHTML = "";
+
+        if (!student || student.history.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5">Học sinh chưa có lịch sử thi đua.</td></tr>`;
+            return;
+        }
+
+        student.history.forEach((item, index) => {
+            let tr = document.createElement("tr");
+            let scoreDisplay = item.score > 0 ? `<span class="score-good">+${item.score}</span>` : `<span class="score-bad">${item.score}</span>`;
+            tr.innerHTML = `
+                <td>${index + 1}</td>
+                <td>Ngày ${item.day}/${item.month}</td>
+                <td>${scoreDisplay}</td>
+                <td style="text-align: left;">${getFullDescription(item.reason)}</td>
+                <td><button class="btn btn-delete" onclick="xoaLichSuAdmin(${stt}, ${index})">❌ Xóa</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function xoaLichSuAdmin(stt, index) {
+        if (confirm("Bạn có chắc chắn muốn xóa mục ghi nhận thi đua này?")) {
+            let student = students.find(s => s.stt === stt);
+            if (student) {
+                student.history.splice(index, 1);
+                saveData();
+            }
+        }
+    }
+
+    function doiTenHocSinhTuAdmin() {
+        let selectEl = document.getElementById("select-student");
+        let stt = parseInt(selectEl.value, 10);
+        let student = students.find(s => s.stt === stt);
+
+        if (student) {
+            let tenMoi = prompt(`Nhập tên mới cho học sinh STT ${stt}:`, student.name);
+            if (tenMoi && tenMoi.trim() !== "") {
+                student.name = tenMoi.trim();
+                initAdminSelect();
+                selectEl.value = stt;
+                saveData();
+                alert("Đã cập nhật tên học sinh thành công!");
+            }
+        }
+    }
+
+    function saoLuuDuLieu() {
+        let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(students, null, 2));
+        let downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `DuLieu_ThiDua_10A7_${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function phucHoiDuLieu(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let parsed = JSON.parse(e.target.result);
+                if (Array.isArray(parsed)) {
+                    students = parsed;
+                    saveData();
+                    initAdminSelect();
+                    alert("Phục hồi dữ liệu thành công!");
+                } else {
+                    alert("Định dạng file JSON không hợp lệ!");
+                }
+            } catch (err) {
+                alert("Lỗi đọc file JSON: " + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function xuatExcel() {
+        let ranks = getRankings();
+        let exportData = students.map(s => {
+            let { monthScores, total } = tinhDiemHocSinh(s);
+            let row = {
+                "STT": s.stt,
+                "Họ và Tên": s.name,
+                "Tháng 9": monthScores[9],
+                "Tháng 10": monthScores[10],
+                "Tháng 11": monthScores[11],
+                "Tháng 12": monthScores[12],
+                "Tháng 1": monthScores[1],
+                "Tháng 2": monthScores[2],
+                "Tháng 3": monthScores[3],
+                "Tháng 4": monthScores[4],
+                "Tháng 5": monthScores[5],
+                "Tổng Cả Năm": total,
+                "Xếp Hạng": `#${ranks[s.stt]}`
+            };
+            return row;
+        });
+
+        let worksheet = XLSX.utils.json_to_sheet(exportData);
+        let workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "ThiDua_10A7");
+        XLSX.writeFile(workbook, `Bang_Diem_Thi_Dua_10A7.xlsx`);
+    }
+</script>
+</body>
+</html>
